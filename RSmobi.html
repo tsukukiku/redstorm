@@ -278,7 +278,7 @@ body.dev-touch #b-full{display:inline-block}
 let LANG=(localStorage.getItem("rs_lang")||"zh");
 const L={
 zh:{
- solo:"单 人 遭 遭 战",host:"创 建 联 机 房 间",join:"加 入 联 机 房 间",help:"操 作 说 明 / 帮 助",
+ solo:"单 人 遭 遇 战",host:"创 建 联 机 房 间",join:"加 入 联 机 房 间",help:"操 作 说 明 / 帮 助",
  back:"返 回",start:"开 始 作 战",startGame:"开 始 游 戏",
  homeNote:"支持 2~4 人联机或人机混战 · 等距视角 · 战争迷雾未知地图",
  nick:"你的昵称",aiCount:"电脑对手",cashLbl:"初始资金",yourCountry:"你的国家",
@@ -422,7 +422,7 @@ const mix2=(a,b,t)=>[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t];
 
 /* ================= MOBI: 设备模式 ================= */
 let DEV=localStorage.getItem("rs_dev")||
- ((("ontouchstart"in window)||navigator.maxTouchPoints>0)&&Math.min(screen.width,screen.height)<820)?"mobile":"pc";
+ ((("ontouchstart"in window)||navigator.maxTouchPoints>0)&&Math.min(screen.width,screen.height)<820)?"mobile":"pc");
 let TOUCH=DEV!=="pc";
 let usingTouch=false,SIDE_OPEN=false;
 function applyDevClass(){
@@ -2086,7 +2086,7 @@ addEventListener("touchmove",e=>{
  const t=e.touches[0],dx=t.clientX-SWIPE.x,dy=t.clientY-SWIPE.y;
  if(Math.abs(dy)>70){SWIPE=null;return;}
  if(SWIPE.edgeR&&dx<-55){SIDE_OPEN=false;applySide();SWIPE=null;SND.play("ui");}
- else if(SWIPE.edgeL&&dx>55&&!SIDE_OPEN){SIDE_OPEN=true;applySide();SWIPE=null;SND.play("ui";}
+ else if(SWIPE.edgeL&&dx>55&&!SIDE_OPEN){SIDE_OPEN=true;applySide();SWIPE=null;SND.play("ui");}
 },{passive:true});
 addEventListener("touchend",()=>{SWIPE=null;});
 

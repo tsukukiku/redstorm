@@ -2029,7 +2029,7 @@ function wireMiniNav(mc){
     for(const en of G.ents.values()){if(en.o===MY)continue;
      const dd=dist(p[0],p[1],en.x,en.y);if(dd<bd){bd=dd;tgt=en;}}
     if(tgt)cSendCmd({op:"attack",ids:sel.map(u=>u.id),tid:tgt.id});
-    else cSendCmd({op:"move",ids:sel.map(u=>u.id),x:p[0],y:p[1]);}}}});
+    else cSendCmd({op:"move",ids:sel.map(u=>u.id),x:p[0],y:p[1]});}}});
  mc.addEventListener("mousemove",e=>{
   if(!mc._drag)return;const p=toWorld(e.clientX,e.clientY);centerOn(p[0],p[1]);});
  addEventListener("mouseup",()=>{mc._drag=false;});

@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>红色风暴 RED STORM</title>
+<link rel="icon" type="image/svg+xml" href="icon.svg">
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
@@ -58,7 +59,9 @@ body.mob #top{right:0}
 .tbtn.offv{opacity:.5}
 #side{position:absolute;top:0;right:0;width:212px;bottom:0;background:rgba(12,17,24,.96);border-left:1px solid #2c3947;
  pointer-events:auto;display:flex;flex-direction:column;padding:8px}
-body.mob #side{transform:translateX(100%);transition:transform .25s;box-shadow:-8px 0 24px rgba(0,0,0,.5);z-index:26}
+body.mob #side{transform:translateX(100%);transition:transform .25s;box-shadow:-8px 0 24px rgba(0,0,0,.5);z-index:35;overflow-y:auto;padding-bottom:16px}
+body.mob #mini{width:140px;height:140px}
+body.mob.side-open #cbar,body.mob.side-open #mini-btn{display:none!important}
 body.mob.side-open #side{transform:none}
 .secttl{font-size:12px;color:#e84536;letter-spacing:3px;margin:7px 0 5px;border-bottom:1px solid #2c3947;padding-bottom:3px}
 .ilist{display:flex;flex-wrap:wrap;gap:5px}
@@ -154,7 +157,8 @@ body.mob #cbar{display:flex}
    <div id="s-bonus" class="bonus" style="margin:-4px 0 8px 120px"></div>
    <div class="row"><label data-i="aiCount"></label><select id="s-ai"><option value="1"></option><option value="2" selected></option><option value="3"></option></select></div>
    <div class="row"><label data-i="cashLbl"></label><select id="s-cash"><option value="3000">3000</option><option value="6000" selected>6000</option><option value="9999">9999</option></select></div>
-   <button class="mbtn" id="b-solo-go" data-i="start"></button>
+   <div class="row"><label data-i="diff"></label><select id="s-diff"><option value="easy"></option><option value="medium" selected></option><option value="hard"></option></select></div>   
+<button class="mbtn" id="b-solo-go" data-i="start"></button>
    <button class="mbtn" style="border-left-color:#46586b" id="b-solo-back" data-i="back"></button>
   </div>
 
@@ -312,7 +316,7 @@ zh:{
  back:"返 回",start:"开 始 作 战",startGame:"开 始 游 戏",
  homeNote:"支持 2~4 人联机或人机混战 · 等距视角 · 战争迷雾未知地图",
  netNote:"联机服务器（留空 = 官方服务器）：",
- nick:"你的昵称",aiCount:"电脑对手",cashLbl:"初始资金",yourCountry:"你的国家",
+ nick:"你的昵称",aiCount:"电脑对手",cashLbl:"初始资金",yourCountry:"你的国家",diff:"难度",diffE:"简单",diffM:"普通",diffH:"困难",
  device:"设备模式",dPhone:"📱 手机版",dPad:"📋 平板",dPC:"💻 电脑版",fullscreen:"⛶ 全屏（尝试锁横屏）",
  aiN:n=>n+" 个",hostHint:"创建后把 <b style='color:#ffd76a'>房间码</b> 发给好友，对方选择「加入联机房间」输入即可。双方都需能上网。",
  copy:"复 制 房 间 码",addAi:"＋ 添加电脑玩家",dissolve:"解 散 房 间",
@@ -343,7 +347,7 @@ ja:{
  back:"戻る",start:"出 撃！",startGame:"ゲーム開始",
  homeNote:"2〜4人オンライン対戦 or CPU戦 · アイソメトリック · 戦争の霧",
  netNote:"通信サーバー（空欄 = 公式）:",
- nick:"ニックネーム",aiCount:"CPU敵",cashLbl:"初期資金",yourCountry:"国を選択",
+ nick:"ニックネーム",aiCount:"CPU敵",cashLbl:"初期資金",yourCountry:"国を選択",diff:"難易度",diffE:"簡単",diffM:"普通",diffH:"難しい",
  device:"端末モード",dPhone:"📱 スマホ",dPad:"📋 タブレット",dPC:"💻 PC",fullscreen:"⛶ 全画面（横ロック）",
  aiN:n=>n+" CPU",hostHint:"作成後、<b style='color:#ffd76a'>部屋コード</b>を友達に送り、「ルームに参加」から入力してもらおう。双方ともネット接続が必要。",
  copy:"部屋コードをコピー",addAi:"＋ CPUを追加",dissolve:"ルーム解散",
@@ -374,7 +378,7 @@ en:{
  back:"BACK",start:"START BATTLE",startGame:"START GAME",
  homeNote:"2–4 players online or vs AI · Isometric view · Fog-of-war maps",
  netNote:"Signaling server (blank = official):",
- nick:"Nickname",aiCount:"AI opponents",cashLbl:"Starting funds",yourCountry:"Your nation",
+ nick:"Nickname",aiCount:"AI opponents",cashLbl:"Starting funds",yourCountry:"Your nation",diff:"Difficulty",diffE:"Easy",diffM:"Medium",diffH:"Hard",
  device:"Device",dPhone:"📱 Phone",dPad:"📋 Tablet",dPC:"💻 Desktop",fullscreen:"⛶ Fullscreen (landscape lock)",
  aiN:n=>n+" AI",hostHint:"Share your <b style='color:#ffd76a'>room code</b>; friends pick Join Room. Both sides need internet.",
  copy:"COPY ROOM CODE",addAi:"＋ Add AI player",dissolve:"DISBAND",
@@ -500,6 +504,11 @@ const HARV_CAP=18,HARV_RATE=2.4,HARV_VAL=12;
 const SPAWNS=[[9,9],[MW-12,9],[MW-12,MH-12],[9,MH-12]];
 const BH={conyard:40,power:36,refiner:38,barracks:36,factory:42,turret:24,coil:48,
  rifle:24,rpg:24,eng:24,harv:28,ltank:22,htank:26,v2:28};
+const DIFF={
+ easy:{ai:0.65,tick:1.6,wave:1.8,prod:0.7},
+ medium:{ai:1,tick:1,wave:1,prod:1},
+ hard:{ai:1.5,tick:0.7,wave:0.65,prod:1.4}};
+const DIFFM=()=>DIFF[(G&&G.diff)||"medium"];
 
 /* ================= 音效 ================= */
 const SND={ctx:null,muted:false,last:{},
@@ -548,12 +557,12 @@ let APP={state:"menu"},G=null,NET={peer:null,conns:[],conn:null,role:null,lastLo
 let LOBBY=null,MY=0,AUTH=false;
 let cam={x:0,y:0},view={w:0,h:0};
 let SEL=new Set(),GRP={},PLACE=null,LASTPING=null,ATKMODE=false;
-let FOG={vis:new Uint8Array(MW*MH),exp:new Uint8Array(MW*MH)},KNOWN=new Map();
+let FOG={vis:new Uint8Array(MW*MH),exp:new Uint8Array(MW*MH),lit:new Uint8Array(MW*MH)},KNOWN=new Map();
 let FX=[],PINGS=[],fogCv=document.createElement("canvas"),miniTerr=null,miniFog=document.createElement("canvas");
 let mouse={x:0,y:0,down:false,sx:0,sy:0,drag:false,inCanvas:false};
 let keys={},fpsC=0,fpsT=0,fpsV=0,dtD=0.016;
 let DEV=localStorage.getItem("rs_dev")||"pc";
-let TST={pan:null},rotIgnore=false;
+let TST={pan:null},rotIgnore=false,camPre=null,camResetAt=0;
 const MOD=(o,k)=>(G.players[o].mod[k]||1);
 
 /* ================= 等距投影 ================= */
@@ -652,11 +661,11 @@ function losC(ax,ay,bx,by){const d=dist(ax,ay,bx,by),steps=Math.ceil(d/12);
 
 /* ================= 建立对局 ================= */
 function newGame(cfg){
- G={seed:cfg.seed,time:0,nextId:1,over:false,started:cfg.players.length,ents:new Map(),
+ G={seed:cfg.seed,time:0,nextId:1,over:false,started:cfg.players.length,diff:cfg.diff||"medium",ents:new Map(),
     players:cfg.players.map((p,i)=>{const cd=CTY(p.country);
       return{name:p.name,ci:p.ci,team:p.team||0,ai:!!p.ai,country:cd.id,mod:{...cd.mod},cr:cfg.cash,
         q:{b:[],i:[],v:[]},po:0,pu:0,kills:0,lost:0,gone:false,
-        aiT:1+Math.random(),wave:5,alert:0};}),
+        aiT:1+Math.random(),wave:5*DIFF[(cfg.diff||"medium")].wave,alert:0};}),
     spawns:cfg.spawns,evq:[],projs:[],scorch:[],dirtyOre:new Set(),lastOreWarn:0,deadList:[],trees:[],lastAtkSnd:0};
  genMap();
  G.players.forEach((pl,i)=>{const s=G.spawns[i];
@@ -712,6 +721,7 @@ function tickProd(dt){
   for(const cat of["b","i","v"]){const q=pl.q[cat];if(!q.length)continue;
    const it=q[0],d=DEF(it.k);
    let rate=pm;if(cat==="i")rate*=MOD(oi,"infSpeed");
+   if(pl.ai)rate*=DIFFM().prod;
    if(cat!=="b"&&it.rdy){
     const srcKind=cat==="i"?"barracks":"factory";
     let src=null;for(const e of G.ents.values())if(e.kind==="b"&&e.o===oi&&e.k===srcKind&&e.built){src=e;break;}
@@ -875,7 +885,7 @@ function harvTick(u,dt){
    else{u.hst="unload";u.ut=1.6;}
    break;}
   case"unload":{u.ut-=dt;
-   if(u.ut<=0){const val=Math.round(u.cargo*HARV_VAL*MOD(u.o,"oreVal"));G.players[u.o].cr+=val;u.cargo=0;
+   if(u.ut<=0){const val=Math.round(u.cargo*HARV_VAL*MOD(u.o,"oreVal")*(G.players[u.o].ai?DIFFM().ai:1));G.players[u.o].cr+=val;u.cargo=0;
     fx("text",u.x,u.y-18,"+"+val);SND.play("cash",.25);
     const i=findOre(u);if(i>=0){u.htgt=i;u.hst="go";u.path=astar((u.x/TILE)|0,(u.y/TILE)|0,i%MW,(i/MW)|0);u.pi=0;}else u.hst="idle";}
    break;}}}
@@ -992,7 +1002,7 @@ function finish(winIdx){
 /* ================= AI ================= */
 function aiTick(dt){
  for(let i=0;i<G.players.length;i++){const P=G.players[i];if(!P.ai||P.gone)continue;
-  P.aiT-=dt;P.alert-=dt;if(P.aiT>0)continue;P.aiT=1.2+Math.random()*.8;
+  P.aiT-=dt;P.alert-=dt;if(P.aiT>0)continue;P.aiT=(1.2+Math.random()*.8)*DIFFM().tick;
   const my=blds(i),mu=units(i);
   if(!my.length&&!mu.length)continue;
   const cy=my.find(b=>b.k==="conyard")||my[0];
@@ -1265,8 +1275,8 @@ function startGame(cfg){
  document.body.classList.remove("side-open");
  SEL.clear();PLACE=null;FX=[];PINGS=[];KNOWN.clear();ATKMODE=false;
  $("cb-atk").classList.remove("on");
- FOG.exp.fill(0);FOG.vis.fill(0);
- newGame({seed:cfg.seed,players:cfg.players,spawns:cfg.spawns,cash:cfg.cash});
+ FOG.exp.fill(0);FOG.vis.fill(0);FOG.lit.fill(0);
+  newGame({seed:cfg.seed,players:cfg.players,spawns:cfg.spawns,cash:cfg.cash,diff:cfg.diff});
  buildSidebar();
  const cd=CTY(G.players[MY].country);
  $("mycty").innerHTML=cd.flag+" "+TN(cd.n)+" · "+TN(cd.b);
@@ -1299,7 +1309,8 @@ function recomputeFog(pi){
   for(let y=Math.max(0,(cyy-d)|0);y<Math.min(MH,cyy+d+1);y++)
    for(let x=Math.max(0,(cx-d)|0);x<Math.min(MW,cx+d+1);x++){
     const dx=x+.5-cx,dy=y+.5-cyy;
-    if(dx*dx+dy*dy<=r2){const i=y*MW+x;FOG.vis[i]=1;FOG.exp[i]=1;}}}
+    if(dx*dx+dy*dy<=r2){const i=y*MW+x;FOG.vis[i]=1;FOG.exp[i]=1;
+     if(e.kind==="u")FOG.lit[i]=1;}}}
  for(const e of G.ents.values()){
   if(e.o===pi||e.kind!=="b")continue;
   const i=clamp((e.y/TILE)|0,0,MH-1)*MW+clamp((e.x/TILE)|0,0,MW-1);
@@ -1309,7 +1320,7 @@ function recomputeFog(pi){
   const i=clamp((g.y/TILE)|0,0,MH-1)*MW+clamp((g.x/TILE)|0,0,MW-1);
   if(FOG.vis[i]&&!G.ents.has(id))KNOWN.delete(id);}
  const fctx=fogCv.getContext("2d"),img=fctx.createImageData(MW,MH);
- for(let i=0;i<MW*MH;i++)img.data[i*4+3]=FOG.vis[i]?0:FOG.exp[i]?150:246;
+ for(let i=0;i<MW*MH;i++)img.data[i*4+3]=FOG.vis[i]?0:FOG.lit[i]?0:FOG.exp[i]?150:246;
  fctx.putImageData(img,0,0);}
 
 /* ================= 美术 ================= */
@@ -1968,7 +1979,7 @@ function drawMiniTo(mc){
   const s2=e.kind==="b"?4:2.5;
   m.fillRect(e.x/TILE*sc-s2/2,e.y/TILE*sc-s2/2,s2,s2);}
  const fc=miniFog.getContext("2d"),img=fc.createImageData(MW,MH);
- for(let i=0;i<MW*MH;i++)img.data[i*4+3]=FOG.vis[i]?0:FOG.exp[i]?120:255;
+ for(let i=0;i<MW*MH;i++)img.data[i*4+3]=FOG.vis[i]?0:FOG.lit[i]?40:FOG.exp[i]?120:255;
  fc.putImageData(img,0,0);
  m.drawImage(miniFog,0,0);
  for(const p of PINGS){
@@ -2130,6 +2141,7 @@ cv.addEventListener("touchstart",e=>{
   const t1=e.touches[0],t2=e.touches[1];
   TST.pan={x:(t1.clientX+t2.clientX)/2,y:(t1.clientY+t2.clientY)/2};
   mouse.down=false;mouse.drag=false;
+  camPre={x:cam.x,y:cam.y};camResetAt=0;          // ★ 记住手势前位置
   return;}
  if(e.touches.length===1){
   const t=e.touches[0];
@@ -2148,6 +2160,7 @@ cv.addEventListener("touchmove",e=>{
   cam.x-=nx-TST.pan.x;cam.y-=ny-TST.pan.y;
   TST.pan={x:nx,y:ny};
   clampCam();
+  camResetAt=performance.now()+5000;
   return;}
  if(e.touches.length===1&&mouse.down){
   const t=e.touches[0];
@@ -2160,6 +2173,7 @@ cv.addEventListener("touchend",e=>{
  if(!G||G.over){
   mouse.down=false;mouse.drag=false;TST.pan=null;return;}
  if(e.touches.length===0){
+  if(camPre)camResetAt=performance.now()+5000;
   if(PLACE){mouse.down=false;mouse.drag=false;TST.pan=null;return;}
   if(mouse.down&&!mouse.drag){
    const wpos=s2w(mouse.x,mouse.y);
@@ -2321,6 +2335,13 @@ function loop(now){
   if(mouse.x<m2)cam.x-=sp;if(mouse.x>view.w-m2)cam.x+=sp;
   if(mouse.y<m2)cam.y-=sp;if(mouse.y>view.h-m2)cam.y+=sp;}
  clampCam();
+ const panKeys=keys["w"]||keys["a"]||keys["s"]||keys["d"]||keys["ArrowUp"]||keys["ArrowDown"]||keys["ArrowLeft"]||keys["ArrowRight"];
+ if(camPre&&!panKeys&&camResetAt&&performance.now()>=camResetAt&&TST.pan===null){
+  const kr=1-Math.exp(-dt*3);
+  cam.x+=(camPre.x-cam.x)*kr;cam.y+=(camPre.y-cam.y)*kr;
+  if(Math.abs(cam.x-camPre.x)<2&&Math.abs(cam.y-camPre.y)<2){
+   cam.x=camPre.x;cam.y=camPre.y;camPre=null;camResetAt=0;}
+  clampCam();}
  if(AUTH)tickSim(dt);
  else{
   G.time+=dt;
@@ -2360,6 +2381,9 @@ function applyLang(){
  $("help-ja").classList.toggle("hidden",LANG!=="ja");
  $("help-en").classList.toggle("hidden",LANG!=="en");
  const aiSel=$("s-ai");[...aiSel.options].forEach(o=>o.textContent=T("aiN")(o.value));
+ const dSel=$("s-diff");
+ const dOpt={easy:T("diffE"),medium:T("diffM"),hard:T("diffH")};
+ [...dSel.options].forEach(o=>o.textContent=dOpt[o.value]);
  const sc=$("s-country"),jc=$("j-country");
  const pc=localStorage.getItem("rs_country")||"cn";
  ctyOptions(sc,sc.value||pc);ctyOptions(jc,jc.value||pc);
@@ -2470,7 +2494,7 @@ $("b-solo-go").onclick=()=>{
  for(let i=0;i<nAI;i++)players.push({name:"AI "+CTY(pool[i]).flag,ci:i+1,team:0,ai:true,country:pool[i]});
  const spIdx=[0,1,2,3].sort(()=>Math.random()-.5);
  startGame({seed:(Math.random()*1e9)|0,cash:cash,players:players,
-  spawns:players.map((_,i)=>SPAWNS[spIdx[i]]),idx:0,auth:true,mp:false});};
+  spawns:players.map((_,i)=>SPAWNS[spIdx[i]]),idx:0,auth:true,mp:false,diff:$("s-diff").value});};
 $("b-host").onclick=()=>{SND.init();
  const name=localStorage.getItem("rs_name")||L3("指挥官","指揮官","Cmdr");
  createRoom(name);};
@@ -2514,6 +2538,8 @@ $("net-port").value=localStorage.getItem("rs_net-port")||"443";
 $("net-host").oninput=()=>localStorage.setItem("rs_net-host",$("net-host").value.trim());
 $("net-port").oninput=()=>localStorage.setItem("rs_net-port",$("net-port").value.trim());
 document.addEventListener("contextmenu",e=>{if(e.target.tagName==="CANVAS")e.preventDefault();});
+$("s-diff").value=localStorage.getItem("rs_diff")||"medium";
+$("s-diff").onchange=()=>localStorage.setItem("rs_diff",$("s-diff").value);
 
 /* 启动 */
 resize();

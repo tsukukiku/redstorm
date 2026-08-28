@@ -1321,13 +1321,23 @@ function recomputeFog(pi){
   if(FOG.vis[i]&&!G.ents.has(id))KNOWN.delete(id);}
  const fctx=fogCv.getContext("2d"),img=fctx.createImageData(MW,MH);
  for(let i=0;i<MW*MH;i++)img.data[i*4+3]=FOG.vis[i]?0:FOG.lit[i]?0:FOG.exp[i]?150:246;
- fctx.putImageData(img,0,0);}
+ for(const e of G.ents.values()){
+  if(e.o!==pi||e.kind!=="u")continue;
+  const ucx=e.x/TILE,ucy=e.y/TILE,ud=UD[e.k].si+1,ur2=ud*ud;
+  for(let y=Math.max(0,(ucy-ud)|0);y<Math.min(MH,ucy+ud+1);y++)
+   for(let x=Math.max(0,(ucx-ud)|0);x<Math.min(MW,ucx+ud+1);x++){
+    const udx=x+.5-ucx,udy=y+.5-ucy;
+    if(udx*udx+udy*udy<=ur2){const i=y*MW+x;
+     FOG.vis[i]=1;FOG.exp[i]=1;FOG.lit[i]=1;
+     img.data[i*4+3]=0;}}}
+ fctx.putImageData(img,0,0);
+}
 
 /* ================= 美术 ================= */
 const cv=$("cv"),ctx=cv.getContext("2d");
 fogCv.width=MW;fogCv.height=MH;
 let TS={},terrIso=null;
-const TW=(MW+MH)*TILE+4,TH_=(MW+MH)*TILE/2+4,TOX=MH*TILE+2;
+const TW=(MW+MH)*TILE+68,TH_=(MW+MH)*TILE/2+44,TOX=MH*TILE;
 function mkC(w,h){const c=document.createElement("canvas");c.width=w;c.height=h;return c;}
 function dia(g){g.beginPath();g.moveTo(33,1);g.lineTo(65,18);g.lineTo(33,35);g.lineTo(1,18);g.closePath();}
 function initArt(){
@@ -1919,11 +1929,11 @@ function draw(){
  if(!G)return;
  tickFX();
  if(terrIso){
-  const dx=-cam.x,dy=-cam.y;
-  const sx0=clamp(-dx,0,TW),sy0=clamp(-dy,0,TH_);
-  const sx1=clamp(view.w-dx,0,TW),sy1=clamp(view.h-dy,0,TH_);
+  const ox=cam.x+TOX,oy=cam.y;
+  const sx0=clamp(ox,0,TW),sy0=clamp(oy,0,TH_);
+  const sx1=clamp(ox+view.w,0,TW),sy1=clamp(oy+view.h,0,TH_);
   if(sx1>sx0&&sy1>sy0)
-   ctx.drawImage(terrIso,sx0,sy0,sx1-sx0,sy1-sy0,sx0+dx,sy0+dy,sx1-sx0,sy1-sy0);}
+   ctx.drawImage(terrIso,sx0,sy0,sx1-sx0,sy1-sy0,sx0-ox,sy0-oy,sx1-sx0,sy1-sy0);}
  const vb=visBounds();
  collectDR(vb);
  drawGroundDyn(vb);
@@ -2317,14 +2327,17 @@ function updateSelPan(){
   $("selhp").style.width=avg*100+"%";}}
 
 /* ================= 主循环 ================= */
-let lastT=performance.now(),lastF=performance.now(),fogAcc=0;
+let lastT=performance.now(),fogAcc=0,frameAcc=0;
+const FPS_CAP=30,FRAME_MIN=1000/FPS_CAP;
 function loop(now){
  requestAnimationFrame(loop);
- let dt=(now-lastT)/1000;lastT=now;
- if(dt>0.05)dt=0.05;
- dtD=clamp((now-lastF)/1000,0.001,0.05);lastF=now;
+ frameAcc+=now-lastT;lastT=now;
+ if(APP.state!=="game"||!G){frameAcc=0;return;}
+ if(frameAcc<FRAME_MIN)return;
+ let dt=frameAcc/1000;frameAcc=0;
+ if(dt>0.1)dt=0.1;
+ dtD=clamp(dt,0.001,0.05);
  fpsC++;fpsT+=dt;if(fpsT>=.5){fpsV=Math.round(fpsC/fpsT);fpsC=0;fpsT=0;}
- if(APP.state!=="game"||!G)return;
  const sp=520*dt,hasSel=SEL.size>0;
  if(keys["w"]||keys["ArrowUp"])cam.y-=sp;
  if(keys["ArrowDown"]||((keys["s"]||keys["S"])&&!hasSel))cam.y+=sp;

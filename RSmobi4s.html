@@ -1330,7 +1330,6 @@ function recomputeFog(pi){
     if(dx*dx+dy*dy<=r2){const i=y*MW+x;FOG.vis[i]=1;FOG.exp[i]=1;
      if(e.kind==="u")FOG.lit[i]=1;
      if(PEXP&&PEXP[pi])PEXP[pi][i]=1;}}}
-     if(e.kind==="u")FOG.lit[i]=1;}}}
  for(const e of G.ents.values()){
   if(e.o===pi||e.kind!=="b")continue;
   const i=clamp((e.y/TILE)|0,0,MH-1)*MW+clamp((e.x/TILE)|0,0,MW-1);

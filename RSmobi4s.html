@@ -557,7 +557,7 @@ let APP={state:"menu"},G=null,NET={peer:null,conns:[],conn:null,role:null,lastLo
 let LOBBY=null,MY=0,AUTH=false;
 let cam={x:0,y:0},view={w:0,h:0};
 let SEL=new Set(),GRP={},PLACE=null,LASTPING=null,ATKMODE=false;
-let FOG={vis:new Uint8Array(MW*MH),exp:new Uint8Array(MW*MH),lit:new Uint8Array(MW*MH)},KNOWN=new Map();
+let FOG={vis:new Uint8Array(MW*MH),exp:new Uint8Array(MW*MH),lit:new Uint8Array(MW*MH)},KNOWN=new Map(),PEXP=null;
 let FX=[],PINGS=[],fogCv=document.createElement("canvas"),miniTerr=null,miniFog=document.createElement("canvas");
 let mouse={x:0,y:0,down:false,sx:0,sy:0,drag:false,inCanvas:false};
 let keys={},fpsC=0,fpsT=0,fpsV=0,dtD=0.016;
@@ -673,7 +673,10 @@ function newGame(cfg){
   const spots=[[3,1],[-1,1],[3,-2],[-1,-2]];
   ["rifle","rifle","rpg","eng"].forEach((uk,j)=>{
    spawnUnit(i,uk,(s[0]-1+spots[j][0]+.5)*TILE,(s[1]-1+spots[j][1]+.5)*TILE);});});
- recomputeFog(MY);buildMiniTerr();buildTerrainISO();}
+ PEXP=cfg.players.map(()=>new Uint8Array(MW*MH));
+ recomputeFog(MY);
+ if(PEXP)for(let i=0;i<G.players.length;i++)updateExpMap(i);
+ buildMiniTerr();buildTerrainISO();}
 const blds=o=>{const r=[];for(const e of G.ents.values())if(e.kind==="b"&&e.o===o)r.push(e);return r;};
 const units=o=>{const r=[];for(const e of G.ents.values())if(e.kind==="u"&&e.o===o)r.push(e);return r;};
 function placeBld(o,k,tx,ty,free){
@@ -689,7 +692,9 @@ function validPlace(o,k,tx,ty){
  if(tx<0||ty<0||tx+d.w>MW||ty+d.h>MH)return false;
  for(let y=ty;y<ty+d.h;y++)for(let x=tx;x<tx+d.w;x++){const i=y*MW+x;
   if(G.terr[i]!==0||G.occ[i]>=0||G.ore[i]>0)return false;}
- if(!G.players[o].ai&&!FOG.exp[clamp(ty+(d.h>>1),0,MH-1)*MW+clamp(tx+(d.w>>1),0,MW-1)])return false;
+ if(!G.players[o].ai){
+  const em=(PEXP&&PEXP[o])?PEXP[o]:FOG.exp;
+  if(!em[clamp(ty+(d.h>>1),0,MH-1)*MW+clamp(tx+(d.w>>1),0,MW-1)])return false;}
  return true;}
 function spawnUnit(o,k,x,y){
  const d=UD[k],id=G.nextId++;
@@ -1119,6 +1124,10 @@ function applySnap(s){
    e.tx=Math.round(a[3]/TILE-e.w/2);e.ty=Math.round(a[4]/TILE-e.h/2);}
   else{e._tx=a[3];e._ty=a[4];e.face=a[7]/57.3;if(e.k==="harv")e.cargo=a[8];}}
  for(const id of[...G.ents.keys()])if(!seen.has(id)){G.ents.delete(id);KNOWN.delete(id);}
+ G.occ.fill(-1);
+ for(const e of G.ents.values())if(e.kind==="b")
+  for(let y=e.ty;y<e.ty+e.h;y++)for(let x=e.tx;x<e.tx+e.w;x++)
+   if(y>=0&&x>=0&&y<MH&&x<MW)G.occ[y*MW+x]=e.id;
  s.ps.forEach((p,i)=>{if(G.players[i]){G.players[i].cr=p.c;G.players[i].po=p.o;G.players[i].pu=p.u;}});
  s.qs.forEach((qq,i)=>{if(!G.players[i])return;["b","i","v"].forEach((cat,ci)=>{
   G.players[i].q[cat]=qq[ci].map(a=>({k:KEYS[a[0]],p:a[1]/100,rdy:!!a[2]}));});});
@@ -1301,6 +1310,15 @@ function quitToMenu(){
 addEventListener("beforeunload",()=>{try{NET.peer&&NET.peer.destroy()}catch(e){}});
 
 /* ================= 迷雾 ================= */
+function updateExpMap(pi){
+ if(!PEXP||!PEXP[pi])return;
+ for(const e of G.ents.values()){if(e.o!==pi)continue;
+  const d=e.kind==="b"?BD[e.k].si:UD[e.k].si,r2=d*d;
+  const cx=e.x/TILE,cyy=e.y/TILE;
+  for(let y=Math.max(0,(cyy-d)|0);y<Math.min(MH,cyy+d+1);y++)
+   for(let x=Math.max(0,(cx-d)|0);x<Math.min(MW,cx+d+1);x++){
+    const dx=x+.5-cx,dy=y+.5-cyy;
+    if(dx*dx+dy*dy<=r2)PEXP[pi][y*MW+x]=1;}}}
 function recomputeFog(pi){
  FOG.vis.fill(0);
  for(const e of G.ents.values()){if(e.o!==pi)continue;
@@ -1310,6 +1328,8 @@ function recomputeFog(pi){
    for(let x=Math.max(0,(cx-d)|0);x<Math.min(MW,cx+d+1);x++){
     const dx=x+.5-cx,dy=y+.5-cyy;
     if(dx*dx+dy*dy<=r2){const i=y*MW+x;FOG.vis[i]=1;FOG.exp[i]=1;
+     if(e.kind==="u")FOG.lit[i]=1;
+     if(PEXP&&PEXP[pi])PEXP[pi][i]=1;}}}
      if(e.kind==="u")FOG.lit[i]=1;}}}
  for(const e of G.ents.values()){
   if(e.o===pi||e.kind!=="b")continue;
@@ -2364,7 +2384,8 @@ function loop(now){
   for(const e of G.ents.values())if(e.kind==="u"&&e._tx!==undefined){
    e.x+=(e._tx-e.x)*k;e.y+=(e._ty-e.y)*k;}}
  fogAcc-=dt;
- if(fogAcc<=0){fogAcc=.1;recomputeFog(MY);}
+ if(fogAcc<=0){fogAcc=.1;recomputeFog(MY);
+  if(AUTH&&PEXP)for(let i=0;i<G.players.length;i++)updateExpMap(i);}
  const pl=G.players[MY];
  $("cr").textContent="¥ "+Math.floor(pl.cr);
  const pr2=pl.po>0?clamp(pl.pu/pl.po,0,1):(pl.pu>0?1:0);
